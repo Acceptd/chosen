@@ -12,3 +12,4 @@ chosen.zip
 _SpecRunner.html
 spec/public
 !chosen.jquery.js
+!chosen.css
