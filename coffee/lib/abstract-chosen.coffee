@@ -291,7 +291,7 @@ class AbstractChosen
        /Windows Phone/i.test(window.navigator.userAgent) or
        /BlackBerry/i.test(window.navigator.userAgent) or
        /BB10/i.test(window.navigator.userAgent) or
-       /Android.*Mobile/i.test(window.navigator.userAgent)
+       /Android/i.test(window.navigator.userAgent)
       return false
     return true
 
