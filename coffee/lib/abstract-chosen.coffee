@@ -116,6 +116,9 @@ class AbstractChosen
     option_el.className = classes.join(" ")
     option_el.style.cssText = option.style
     option_el.setAttribute("data-option-array-index", option.array_index)
+    option_el.setAttribute("role", "option")
+    option_el.id = "#{@form_field.id}-chosen-search-result-#{option.array_index}"
+    option_el.setAttribute("aria-selected", "true") if option.selected
     option_el.innerHTML = option.search_text
     option_el.title = option.title if option.title
 
@@ -340,11 +343,11 @@ class AbstractChosen
         <span>#{@default_text}</span>
         <div><b></b></div>
       </a>
-      <div class="chosen-drop">
+      <div class="chosen-drop" aria-hidden="true">
         <div class="chosen-search">
-          <input class="chosen-search-input" type="text" autocomplete="off" />
+          <input class="chosen-search-input" type="text" aria-expanded="false" aria-haspopup="true" role="combobox" aria-autocomplete="list" autocomplete="off" />
         </div>
-        <ul class="chosen-results"></ul>
+        <ul class="chosen-results" role="listbox" aria-busy="true"></ul>
       </div>
     """
 
@@ -352,11 +355,11 @@ class AbstractChosen
     """
       <ul class="chosen-choices">
         <li class="search-field">
-          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" />
+          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" aria-expanded="false" aria-haspopup="true" role="combobox" aria-autocomplete="list" />
         </li>
       </ul>
-      <div class="chosen-drop">
-        <ul class="chosen-results"></ul>
+      <div class="chosen-drop" aria-hidden="true">
+        <ul class="chosen-results" role="listbox" aria-busy="true"></ul>
       </div>
     """
 

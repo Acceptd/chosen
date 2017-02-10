@@ -48,10 +48,12 @@ class Chosen extends AbstractChosen
       @container.html this.get_single_html()
 
     @form_field_jq.hide().after @container
+    @form_field_jq.attr "hidden", true
     @dropdown = @container.find('div.chosen-drop').first()
 
     @search_field = @container.find('input').first()
     @search_results = @container.find('ul.chosen-results').first()
+    @search_results.attr('id', "#{@form_field.id}-chosen-search-results")
     this.search_field_scale()
 
     @search_no_results = @container.find('li.no-results').first()
@@ -63,6 +65,7 @@ class Chosen extends AbstractChosen
       @search_container = @container.find('div.chosen-search').first()
       @selected_item = @container.find('.chosen-single').first()
 
+    this.set_aria_labels()
     this.results_build()
     this.set_tab_index()
     this.set_label_behavior()
@@ -116,6 +119,20 @@ class Chosen extends AbstractChosen
     @form_field_jq.removeData('chosen')
     @form_field_jq.show()
 
+  set_aria_labels: ->
+    @search_field.attr "aria-owns", @search_results.attr "id"
+    if @form_field.attributes["aria-label"]
+      @search_field.attr "aria-label", @form_field.attributes["aria-label"]
+      if @form_field.attributes["aria-labelledby"]
+        @search_field.attr "aria-labelledby", @form_field.attributes["aria-labelledby"]
+    else if Object.prototype.hasOwnProperty.call(@form_field,'labels') && @form_field.labels.length
+      labelledbyList = ""
+      for label, i in @form_field.labels
+        if label.id is ""
+          label.id = "#{@form_field.id}-chosen-label-#{i}"
+        labelledbyList += @form_field.labels[i].id + " "
+      @search_field.attr "aria-labelledby", labelledbyList
+
   search_field_disabled: ->
     @is_disabled = @form_field.disabled || @form_field_jq.parents('fieldset').is(':disabled')
 
@@ -165,6 +182,7 @@ class Chosen extends AbstractChosen
 
     @active_field = false
     this.results_hide()
+    @search_field.attr("aria-expanded", false)
 
     @container.removeClass "chosen-container-active"
     this.clear_backstroke()
@@ -180,6 +198,8 @@ class Chosen extends AbstractChosen
     @active_field = true
 
     @search_field.val(@search_field.val())
+    @search_field.attr("aria-expanded", true)
+    this.search_results.attr("aria-busy", false)
     @search_field.focus()
 
 
@@ -222,6 +242,8 @@ class Chosen extends AbstractChosen
       @result_highlight = el
       @result_highlight.addClass "highlighted"
 
+      @search_field.attr("aria-activedescendant", @result_highlight.attr("id"))
+
       maxHeight = parseInt @search_results.css("maxHeight"), 10
       visible_top = @search_results.scrollTop()
       visible_bottom = maxHeight + visible_top
@@ -244,6 +266,7 @@ class Chosen extends AbstractChosen
       return false
 
     @container.addClass "chosen-with-drop"
+    @dropdown.attr "aria-hidden", false
     @results_showing = true
 
     @search_field.focus()
@@ -260,6 +283,7 @@ class Chosen extends AbstractChosen
       this.result_clear_highlight()
 
       @container.removeClass "chosen-with-drop"
+      @dropdown.attr "aria-hidden", true
       @form_field_jq.trigger("chosen:hiding_dropdown", {chosen: this})
 
     @results_showing = false
@@ -360,6 +384,7 @@ class Chosen extends AbstractChosen
         this.reset_single_select_options()
 
       high.addClass("result-selected")
+      high.attr "aria-selected", true
 
       item = @results_data[ high[0].getAttribute("data-option-array-index") ]
       item.selected = true
