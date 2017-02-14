@@ -121,10 +121,11 @@ class Chosen extends AbstractChosen
 
   set_aria_labels: ->
     @search_field.attr "aria-owns", @search_results.attr "id"
-    if @form_field.attributes["aria-label"]
-      @search_field.attr "aria-label", @form_field.attributes["aria-label"]
+    if @form_field.attributes["aria-label"] || @form_field.attributes["aria-labelledby"]
+      if @form_field.attributes["aria-label"]
+        @search_field.attr "aria-label", @form_field.attributes["aria-label"].value
       if @form_field.attributes["aria-labelledby"]
-        @search_field.attr "aria-labelledby", @form_field.attributes["aria-labelledby"]
+        @search_field.attr "aria-labelledby", @form_field.attributes["aria-labelledby"].value
     else if Object.prototype.hasOwnProperty.call(@form_field,'labels') && @form_field.labels.length
       labelledbyList = ""
       for label, i in @form_field.labels
