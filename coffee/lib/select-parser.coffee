@@ -34,6 +34,7 @@ class SelectParser
           text: option.text
           html: option.innerHTML
           title: option.title if option.title
+          hidden: option.hidden
           selected: option.selected
           disabled: if group_disabled is true then group_disabled else option.disabled
           group_array_index: group_position

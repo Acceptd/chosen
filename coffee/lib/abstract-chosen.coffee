@@ -113,12 +113,13 @@ class AbstractChosen
     classes.push option.classes if option.classes != ""
 
     option_el = document.createElement("li")
+    option_el.setAttribute("hidden", "hidden") if option.hidden
     option_el.className = classes.join(" ")
     option_el.style.cssText = option.style
     option_el.setAttribute("data-option-array-index", option.array_index)
     option_el.setAttribute("role", "option")
     option_el.id = "#{@form_field.id}-chosen-search-result-#{option.array_index}"
-    option_el.setAttribute("aria-selected", "true") if option.selected
+    option_el.setAttribute("aria-selected", "true") if option.selected and !(option.hidden)
     option_el.innerHTML = option.search_text
     option_el.title = option.title if option.title
 
@@ -149,6 +150,7 @@ class AbstractChosen
   reset_single_select_options: () ->
     for result in @results_data
       result.selected = false if result.selected
+      result.attr "aria-selected", false if result.selected
 
   results_toggle: ->
     if @results_showing
@@ -345,9 +347,9 @@ class AbstractChosen
       </a>
       <div class="chosen-drop" aria-hidden="true">
         <div class="chosen-search">
-          <input class="chosen-search-input" type="text" aria-expanded="false" aria-haspopup="true" role="combobox" aria-autocomplete="list" autocomplete="off" />
+          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" />
         </div>
-        <ul class="chosen-results" role="listbox" aria-busy="true"></ul>
+        <ul class="chosen-results" role="listbox"></ul>
       </div>
     """
 
@@ -355,11 +357,11 @@ class AbstractChosen
     """
       <ul class="chosen-choices">
         <li class="search-field">
-          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" aria-expanded="false" aria-haspopup="true" role="combobox" aria-autocomplete="list" />
+          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" role="combobox" aria-autocomplete="list" />
         </li>
       </ul>
       <div class="chosen-drop" aria-hidden="true">
-        <ul class="chosen-results" role="listbox" aria-busy="true"></ul>
+        <ul class="chosen-results" role="listbox"></ul>
       </div>
     """
 

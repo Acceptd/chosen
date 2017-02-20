@@ -28,6 +28,9 @@ $chosen-sprite-retina: url('chosen-sprite@2x.png') !default;
   a{
     cursor: pointer;
   }
+  &:focus {
+    outline: 0;
+  }
 
   .search-choice, .chosen-single{
     .group-name{
@@ -190,6 +193,9 @@ $chosen-sprite-retina: url('chosen-sprite@2x.png') !default;
     em {
       font-style: normal;
       text-decoration: underline;
+    }
+    &[hidden] {
+      display: none !important;
     }
   }
 }
