@@ -16,7 +16,6 @@ $.fn.extend({
         $this.data('chosen', new Chosen(this, options))
 
       return
-
 })
 
 class Chosen extends AbstractChosen
@@ -38,7 +37,7 @@ class Chosen extends AbstractChosen
       'role': 'combobox'
       'aria-expanded': false
 
-    container_props.id = @form_field.id.replace(/[^\w]/g, '_') + "_chosen" if @form_field.id.length
+    container_props.id = @form_field.id if @form_field.id.length
 
     @container = ($ "<div />", container_props)
 
@@ -51,7 +50,6 @@ class Chosen extends AbstractChosen
       @container.html this.get_single_html()
 
     @form_field_jq.hide().after @container
-    @form_field_jq.attr "hidden", true
     @dropdown = @container.find('div.chosen-drop').first()
 
     @search_field = @container.find('input').first()
@@ -80,8 +78,7 @@ class Chosen extends AbstractChosen
     @container.bind 'touchstart.chosen', (evt) => this.container_mousedown(evt); return
     @container.bind 'touchend.chosen', (evt) => this.container_mouseup(evt); return
 
-    @container.bind 'focus.chosen', (evt) => this.container_focus(evt); return
-    @container.bind 'blur.chosen', (evt) => this.container_blur(evt); return
+    @container.bind 'keyup.chosen', (evt) => this.container_keyup(evt); return
 
     @container.bind 'mousedown.chosen', (evt) => this.container_mousedown(evt); return
     @container.bind 'mouseup.chosen', (evt) => this.container_mouseup(evt); return
@@ -129,6 +126,7 @@ class Chosen extends AbstractChosen
     @search_field.attr "aria-owns", @search_results.attr "id"
     if @form_field.attributes["aria-label"] || @form_field.attributes["aria-labelledby"]
       if @form_field.attributes["aria-label"]
+        @container.attr "aria-label", @form_field.attributes["aria-label"].value + " (Press the space bar or down arrow key to open combobox. Use the up and down arrow keys to navigate through options.)"
         @search_field.attr "aria-label", @form_field.attributes["aria-label"].value
       if @form_field.attributes["aria-labelledby"]
         @search_field.attr "aria-labelledby", @form_field.attributes["aria-labelledby"].value
@@ -175,17 +173,6 @@ class Chosen extends AbstractChosen
   container_mouseup: (evt) ->
     this.results_reset(evt) if evt.target.nodeName is "ABBR" and not @is_disabled
 
-  container_focus: (evt) ->
-    return if @is_disabled || @container.hasClass "chosen-container-active"
-
-    this.activate_field()
-    this.results_show()
-
-  container_blur: (evt) ->
-    return if @is_disabled
-
-    this.results_hide()
-
   search_results_mousewheel: (evt) ->
     delta = evt.originalEvent.deltaY or -evt.originalEvent.wheelDelta or evt.originalEvent.detail if evt.originalEvent
     if delta?
@@ -198,7 +185,6 @@ class Chosen extends AbstractChosen
 
   close_field: ->
     $(@container[0].ownerDocument).unbind "click.chosen", @click_test_action
-
     @active_field = false
     this.results_hide()
 
@@ -214,7 +200,6 @@ class Chosen extends AbstractChosen
 
     @container.addClass "chosen-container-active"
     @active_field = true
-
     @search_field.val(@search_field.val())
     @search_field.focus()
 
@@ -251,14 +236,16 @@ class Chosen extends AbstractChosen
 
     @parsing = false
 
-  result_do_highlight: (el) ->
+  result_do_highlight: (el, evt) ->
     if el.length
       this.result_clear_highlight()
 
       @result_highlight = el
       @result_highlight.addClass "highlighted"
-
       @container.attr("aria-activedescendant", @result_highlight.attr("id"))
+
+      if evt && (evt.which == 38 || evt.which == 40)
+        @search_field.val(@result_highlight.text())
 
       maxHeight = parseInt @search_results.css("maxHeight"), 10
       visible_top = @search_results.scrollTop()
@@ -285,7 +272,6 @@ class Chosen extends AbstractChosen
     @container.attr "aria-expanded", true
     @dropdown.attr "aria-hidden", false
     @results_showing = true
-
     @search_field.focus()
     @search_field.val this.get_search_field_value()
 
@@ -298,7 +284,6 @@ class Chosen extends AbstractChosen
   results_hide: ->
     if @results_showing
       this.result_clear_highlight()
-
       @container.removeClass "chosen-with-drop"
       @container.attr "aria-expanded", false
       @dropdown.attr "aria-hidden", true
@@ -343,24 +328,24 @@ class Chosen extends AbstractChosen
     this.result_clear_highlight() if $(evt.target).hasClass "active-result" or $(evt.target).parents('.active-result').first()
 
   choice_build: (item) ->
-    choice = $('<li />', { class: "search-choice" }).html("<span>#{this.choice_label(item)}</span>")
+    choice = $('<li />', { class: "search-choice" }).html("<span>#{this.choice_label(item)} <span class='choice-selected'>(Selected)</span></span>")
 
     if item.disabled
       choice.addClass 'search-choice-disabled'
     else
-      close_link = $('<a />', { class: 'search-choice-close', 'data-option-array-index': item.array_index })
-      close_link.bind 'click.chosen', (evt) => this.choice_destroy_link_click(evt)
-      choice.append close_link
+      close_button = $('<button />', { class: 'search-choice-close', 'data-option-array-index': item.array_index, 'type': 'button' }).text("Deselect #{this.choice_label(item)}")
+      close_button.bind 'click.chosen', (evt) => this.choice_destroy_button_click(evt)
+      choice.append close_button
 
     @search_container.before  choice
 
-  choice_destroy_link_click: (evt) ->
+  choice_destroy_button_click: (evt) ->
     evt.preventDefault()
     evt.stopPropagation()
     this.choice_destroy $(evt.target) unless @is_disabled
 
-  choice_destroy: (link) ->
-    if this.result_deselect( link[0].getAttribute("data-option-array-index") )
+  choice_destroy: (button) ->
+    if this.result_deselect( button[0].getAttribute("data-option-array-index") )
       if @active_field
         @search_field.focus()
       else
@@ -368,7 +353,7 @@ class Chosen extends AbstractChosen
 
       this.results_hide() if @is_multiple and this.choices_count() > 0 and this.get_search_field_value().length < 1
 
-      link.parents('li').first().remove()
+      button.parents('li').first().remove()
 
       this.search_field_scale()
 
@@ -481,28 +466,28 @@ class Chosen extends AbstractChosen
   no_results_clear: ->
     @search_results.find(".no-results").remove()
 
-  keydown_arrow: ->
+  keydown_arrow: (evt) ->
     if @results_showing and @result_highlight
       next_sib = @result_highlight.nextAll("li.active-result").first()
-      this.result_do_highlight next_sib if next_sib
+      this.result_do_highlight next_sib, evt if next_sib
     else
       this.results_show()
 
-  keyup_arrow: ->
+  keyup_arrow: (evt) ->
     if not @results_showing and not @is_multiple
       this.results_show()
     else if @result_highlight
       prev_sibs = @result_highlight.prevAll("li.active-result")
 
       if prev_sibs.length
-        this.result_do_highlight prev_sibs.first()
+        this.result_do_highlight prev_sibs.first(), evt
       else
         this.results_hide() if this.choices_count() > 0
         this.result_clear_highlight()
 
   keydown_backstroke: ->
     if @pending_backstroke
-      this.choice_destroy @pending_backstroke.find("a").first()
+      this.choice_destroy @pending_backstroke.find("button").first()
       this.clear_backstroke()
     else
       next_available_destroy = @search_container.siblings("li.search-choice").last()

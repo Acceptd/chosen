@@ -91,10 +91,12 @@ $chosen-sprite-retina: url('chosen-sprite@2x.png') !default;
     height: 12px;
     background: $chosen-sprite -42px 1px no-repeat;
     font-size: 1px;
+    &:focus,
     &:hover {
       background-position: -42px -10px;
     }
   }
+  &.chosen-disabled .chosen-single abbr:focus,
   &.chosen-disabled .chosen-single abbr:hover {
     background-position: -42px -10px;
   }
@@ -257,6 +259,17 @@ $chosen-sprite-retina: url('chosen-sprite@2x.png') !default;
       span {
         word-wrap: break-word;
       }
+      .choice-selected {
+        border: 0;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        width: 1px;
+        white-space: nowrap;
+      }
       .search-choice-close {
         position: absolute;
         top: 4px;
@@ -266,6 +279,7 @@ $chosen-sprite-retina: url('chosen-sprite@2x.png') !default;
         height: 12px;
         background: $chosen-sprite -42px 1px no-repeat;
         font-size: 1px;
+        &:focus,
         &:hover {
           background-position: -42px -10px;
         }

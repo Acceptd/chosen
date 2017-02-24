@@ -166,7 +166,6 @@ class AbstractChosen
 
   winnow_results: ->
     this.no_results_clear()
-
     results = 0
 
     searchText = this.get_search_text()
@@ -276,11 +275,23 @@ class AbstractChosen
         break
       when 38 # up arrow
         evt.preventDefault()
-        this.keyup_arrow()
+        this.keyup_arrow(evt)
         break
       when 40 # down arrow
         evt.preventDefault()
-        this.keydown_arrow()
+        this.keydown_arrow(evt)
+        break
+
+  container_keyup: (evt) ->
+    stroke = evt.which ? evt.keyCode
+    switch stroke
+      when 32 # space
+        evt.preventDefault()
+        this.results_show() if not @results_showing
+        break
+      when 40 # down arrow
+        evt.preventDefault()
+        this.results_show() if not @results_showing
         break
 
   keyup_checker: (evt) ->
@@ -297,10 +308,16 @@ class AbstractChosen
         break
       when 13 # enter
         evt.preventDefault()
-        this.result_select(evt) if this.results_showing
+        this.result_select(evt) if @results_showing
         break
       when 27 # escape
         this.results_hide() if @results_showing
+        break
+      when 32 # space
+        evt.preventDefault()
+        if @results_showing
+          this.result_select(evt)
+          evt.stopPropagation() # to prevent bubbling up to container_keyup
         break
       when 9, 16, 17, 18, 38, 40, 91
         # don't do anything on these keys
@@ -347,7 +364,7 @@ class AbstractChosen
       </a>
       <div class="chosen-drop" aria-hidden="true">
         <div class="chosen-search">
-          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" />
+          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" aria-live="assertive" />
         </div>
         <ul class="chosen-results" role="listbox"></ul>
       </div>
@@ -355,9 +372,9 @@ class AbstractChosen
 
   get_multi_html: ->
     """
-      <ul class="chosen-choices">
+      <ul class="chosen-choices" aria-live="assertive" aria-relevant="all">
         <li class="search-field">
-          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" role="combobox" aria-autocomplete="list" />
+          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" aria-autocomplete="list" />
         </li>
       </ul>
       <div class="chosen-drop" aria-hidden="true">
@@ -389,4 +406,3 @@ class AbstractChosen
   @default_multiple_text: "Select Some Options"
   @default_single_text: "Select an Option"
   @default_no_result_text: "No results match"
-
