@@ -126,7 +126,7 @@ class Chosen extends AbstractChosen
     @search_field.attr "aria-owns", @search_results.attr "id"
     if @form_field.attributes["aria-label"] || @form_field.attributes["aria-labelledby"]
       if @form_field.attributes["aria-label"]
-        @container.attr "aria-label", @form_field.attributes["aria-label"].value + " (Press the space bar or down arrow key to open combobox. Use the up and down arrow keys to navigate through options.)"
+        @container.attr "aria-label", @form_field.attributes["aria-label"].value + " (Press the space bar or down arrow key to open combobox. Use the up and down arrow keys to navigate through options. Select with space bar or enter key.)"
         @search_field.attr "aria-label", @form_field.attributes["aria-label"].value
       if @form_field.attributes["aria-labelledby"]
         @search_field.attr "aria-labelledby", @form_field.attributes["aria-labelledby"].value
@@ -245,6 +245,7 @@ class Chosen extends AbstractChosen
       @container.attr("aria-activedescendant", @result_highlight.attr("id"))
 
       if evt && (evt.which == 38 || evt.which == 40)
+        @has_traversed_with_up_down_arrows = true
         @search_field.val(@result_highlight.text())
 
       maxHeight = parseInt @search_results.css("maxHeight"), 10
@@ -444,7 +445,7 @@ class Chosen extends AbstractChosen
     @selected_item.addClass("chosen-single-with-deselect")
 
   get_search_field_value: ->
-    @search_field.val()
+    @search_field.val().trim()
 
   get_search_text: ->
     this.escape_html $.trim(this.get_search_field_value())

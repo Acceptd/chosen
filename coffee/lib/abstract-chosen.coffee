@@ -20,6 +20,7 @@ class AbstractChosen
     @mouse_on_container = false
     @results_showing = false
     @result_highlighted = null
+    @has_traversed_with_up_down_arrows = false
     @is_rtl = @options.rtl || /\bchosen-rtl\b/.test(@form_field.className)
     @allow_single_deselect = if @options.allow_single_deselect? and @form_field.options[0]? and @form_field.options[0].text is "" then @options.allow_single_deselect else false
     @disable_search_threshold = @options.disable_search_threshold || 0
@@ -300,6 +301,7 @@ class AbstractChosen
 
     switch stroke
       when 8 # backspace
+        @has_traversed_with_up_down_arrows = false
         if @is_multiple and @backstroke_length < 1 and this.choices_count() > 0
           this.keydown_backstroke()
         else if not @pending_backstroke
@@ -315,7 +317,7 @@ class AbstractChosen
         break
       when 32 # space
         evt.preventDefault()
-        if @results_showing
+        if @results_showing and @has_traversed_with_up_down_arrows
           this.result_select(evt)
           evt.stopPropagation() # to prevent bubbling up to container_keyup
         break
