@@ -34,8 +34,6 @@ class Chosen extends AbstractChosen
       'class': container_classes.join ' '
       'title': @form_field.title
       'tabindex': 0
-      'role': 'combobox'
-      'aria-expanded': false
 
     container_props.id = @form_field.id if @form_field.id.length
 
@@ -236,17 +234,15 @@ class Chosen extends AbstractChosen
 
     @parsing = false
 
-  result_do_highlight: (el, evt) ->
+  result_do_highlight: (el) ->
     if el.length
       this.result_clear_highlight()
 
       @result_highlight = el
       @result_highlight.addClass "highlighted"
-      @container.attr("aria-activedescendant", @result_highlight.attr("id"))
+      @search_field.attr("aria-activedescendant", @result_highlight.attr("id"))
 
-      if evt && (evt.which == 38 || evt.which == 40)
-        @has_traversed_with_up_down_arrows = true
-        @search_field.val(@result_highlight.text())
+      @search_field.val(@result_highlight.text()) if @is_keyboard_user
 
       maxHeight = parseInt @search_results.css("maxHeight"), 10
       visible_top = @search_results.scrollTop()
@@ -270,7 +266,7 @@ class Chosen extends AbstractChosen
       return false
 
     @container.addClass "chosen-with-drop"
-    @container.attr "aria-expanded", true
+    @search_field.attr "aria-expanded", true
     @dropdown.attr "aria-hidden", false
     @results_showing = true
     @search_field.focus()
@@ -286,7 +282,7 @@ class Chosen extends AbstractChosen
     if @results_showing
       this.result_clear_highlight()
       @container.removeClass "chosen-with-drop"
-      @container.attr "aria-expanded", false
+      @search_field.attr "aria-expanded", false
       @dropdown.attr "aria-hidden", true
       @form_field_jq.trigger("chosen:hiding_dropdown", {chosen: this})
 
@@ -301,7 +297,7 @@ class Chosen extends AbstractChosen
   set_label_behavior: ->
     @form_field_label = @form_field_jq.parents("label") # first check for a parent label
     if not @form_field_label.length and @form_field.id.length
-      @form_field_label = $("label[for='#{@form_field.id}']") #next check for a for=#{id}
+      @form_field_label = $("label[for='#{@form_field.id}']") # next check for a for=#{id}
 
     if @form_field_label.length > 0
       @form_field_label.bind 'click.chosen', this.label_click_handler
@@ -329,7 +325,7 @@ class Chosen extends AbstractChosen
     this.result_clear_highlight() if $(evt.target).hasClass "active-result" or $(evt.target).parents('.active-result').first()
 
   choice_build: (item) ->
-    choice = $('<li />', { class: "search-choice" }).html("<span>#{this.choice_label(item)} <span class='choice-selected'>(Selected)</span></span>")
+    choice = $('<li />', { class: "search-choice"}).html("#{this.choice_label(item)}")
 
     if item.disabled
       choice.addClass 'search-choice-disabled'
@@ -338,7 +334,7 @@ class Chosen extends AbstractChosen
       close_button.bind 'click.chosen', (evt) => this.choice_destroy_button_click(evt)
       choice.append close_button
 
-    @search_container.before  choice
+    @search_container.before choice
 
   choice_destroy_button_click: (evt) ->
     evt.preventDefault()
@@ -372,7 +368,11 @@ class Chosen extends AbstractChosen
     @selected_item.find("abbr").remove()
 
   result_select: (evt) ->
-    if @result_highlight
+    if @is_multiple and @is_keyboard_user and @result_highlight?.hasClass('result-selected')
+      @search_choices.find("[data-option-array-index=" + @result_highlight.attr('data-option-array-index') + "]").click()
+      @search_field.val("")
+      this.results_show()
+    else if @result_highlight
       high = @result_highlight
 
       this.result_clear_highlight()
@@ -386,8 +386,7 @@ class Chosen extends AbstractChosen
       else
         this.reset_single_select_options()
 
-      high.addClass("result-selected")
-      high.attr "aria-selected", true
+      high.addClass("result-selected").append(" (Selected)").attr "aria-selected", true
 
       item = @results_data[ high[0].getAttribute("data-option-array-index") ]
       item.selected = true
@@ -402,7 +401,8 @@ class Chosen extends AbstractChosen
 
       unless @is_multiple && (!@hide_results_on_select || (evt.metaKey or evt.ctrlKey))
         this.results_hide()
-        this.show_search_field_default()
+
+      this.show_search_field_default() if @is_keyboard_user
 
       this.trigger_form_field_change selected: @form_field.options[item.options_index].value  if @is_multiple || @form_field.selectedIndex != @current_selectedIndex
       @current_selectedIndex = @form_field.selectedIndex
@@ -418,7 +418,7 @@ class Chosen extends AbstractChosen
       this.single_deselect_control_build()
       @selected_item.removeClass("chosen-default")
 
-    @selected_item.find("span").html(text)
+    @selected_item.find("span").html(text + " <span class='choice-selected-offscreen'>(Selected)</span>")
 
   result_deselect: (pos) ->
     result_data = @results_data[pos]
@@ -467,21 +467,22 @@ class Chosen extends AbstractChosen
   no_results_clear: ->
     @search_results.find(".no-results").remove()
 
-  keydown_arrow: (evt) ->
+  keydown_arrow: ->
     if @results_showing and @result_highlight
-      next_sib = @result_highlight.nextAll("li.active-result").first()
-      this.result_do_highlight next_sib, evt if next_sib
+      next_sib = @result_highlight.nextAll("li").first()
+      this.result_do_highlight next_sib if next_sib
     else
       this.results_show()
+      this.result_do_highlight @search_results.children().first() if this.choices_count() == @search_results.children().length
 
-  keyup_arrow: (evt) ->
+  keyup_arrow: ->
     if not @results_showing and not @is_multiple
       this.results_show()
     else if @result_highlight
-      prev_sibs = @result_highlight.prevAll("li.active-result")
+      prev_sibs = @result_highlight.prevAll("li")
 
       if prev_sibs.length
-        this.result_do_highlight prev_sibs.first(), evt
+        this.result_do_highlight prev_sibs.first()
       else
         this.results_hide() if this.choices_count() > 0
         this.result_clear_highlight()

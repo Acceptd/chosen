@@ -20,7 +20,7 @@ class AbstractChosen
     @mouse_on_container = false
     @results_showing = false
     @result_highlighted = null
-    @has_traversed_with_up_down_arrows = false
+    @is_keyboard_user = false
     @is_rtl = @options.rtl || /\bchosen-rtl\b/.test(@form_field.className)
     @allow_single_deselect = if @options.allow_single_deselect? and @form_field.options[0]? and @form_field.options[0].text is "" then @options.allow_single_deselect else false
     @disable_search_threshold = @options.disable_search_threshold || 0
@@ -121,7 +121,7 @@ class AbstractChosen
     option_el.setAttribute("role", "option")
     option_el.id = "#{@form_field.id}-chosen-search-result-#{option.array_index}"
     option_el.setAttribute("aria-selected", "true") if option.selected and !(option.hidden)
-    option_el.innerHTML = option.search_text
+    option_el.innerHTML = if @is_multiple and option.selected then option.search_text + " <span class='choice-selected-offscreen'>(Selected)</span>" else option.search_text
     option_el.title = option.title if option.title
 
     this.outerHTML(option_el)
@@ -251,6 +251,10 @@ class AbstractChosen
     this.activate_field()
     this.results_show() unless @results_showing or @is_disabled
 
+  set_keyboard_user: ->
+    @is_keyboard_user = true
+    @hide_results_on_select = false if @is_multiple
+
   keydown_checker: (evt) ->
     stroke = evt.which ? evt.keyCode
     this.search_field_scale()
@@ -276,11 +280,11 @@ class AbstractChosen
         break
       when 38 # up arrow
         evt.preventDefault()
-        this.keyup_arrow(evt)
+        this.keyup_arrow()
         break
       when 40 # down arrow
         evt.preventDefault()
-        this.keydown_arrow(evt)
+        this.keydown_arrow()
         break
 
   container_keyup: (evt) ->
@@ -288,10 +292,12 @@ class AbstractChosen
     switch stroke
       when 32 # space
         evt.preventDefault()
+        this.set_keyboard_user()
         this.results_show() if not @results_showing
         break
       when 40 # down arrow
         evt.preventDefault()
+        this.set_keyboard_user()
         this.results_show() if not @results_showing
         break
 
@@ -301,7 +307,7 @@ class AbstractChosen
 
     switch stroke
       when 8 # backspace
-        @has_traversed_with_up_down_arrows = false
+        @is_keyboard_user = false
         if @is_multiple and @backstroke_length < 1 and this.choices_count() > 0
           this.keydown_backstroke()
         else if not @pending_backstroke
@@ -317,7 +323,7 @@ class AbstractChosen
         break
       when 32 # space
         evt.preventDefault()
-        if @results_showing and @has_traversed_with_up_down_arrows
+        if @results_showing and @is_keyboard_user
           this.result_select(evt)
           evt.stopPropagation() # to prevent bubbling up to container_keyup
         break
@@ -361,12 +367,12 @@ class AbstractChosen
   get_single_html: ->
     """
       <a class="chosen-single chosen-default">
-        <span>#{@default_text}</span>
+        <span aria-live="assertive">#{@default_text}</span>
         <div><b></b></div>
       </a>
       <div class="chosen-drop" aria-hidden="true">
         <div class="chosen-search">
-          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" aria-live="assertive" />
+          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" role="combobox" aria-expanded="false" aria-live="assertive" />
         </div>
         <ul class="chosen-results" role="listbox"></ul>
       </div>
@@ -374,9 +380,9 @@ class AbstractChosen
 
   get_multi_html: ->
     """
-      <ul class="chosen-choices" aria-live="assertive" aria-relevant="all">
+      <ul class="chosen-choices">
         <li class="search-field">
-          <input class="chosen-search-input" type="text" autocomplete="off" value="#{@default_text}" aria-autocomplete="list" />
+          <input class="chosen-search-input" type="text" aria-autocomplete="list" autocomplete="off" value="#{@default_text}" role="combobox" aria-expanded="false" aria-live="assertive" />
         </li>
       </ul>
       <div class="chosen-drop" aria-hidden="true">
