@@ -292,12 +292,12 @@ class AbstractChosen
     switch stroke
       when 32 # space
         evt.preventDefault()
-        this.set_keyboard_user()
+        this.set_keyboard_user() if document.activeElement == evt.currentTarget
         this.results_show() if not @results_showing
         break
       when 40 # down arrow
         evt.preventDefault()
-        this.set_keyboard_user()
+        this.set_keyboard_user() if document.activeElement == evt.currentTarget
         this.results_show() if not @results_showing
         break
 
