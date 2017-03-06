@@ -402,7 +402,7 @@ class Chosen extends AbstractChosen
       unless @is_multiple && (!@hide_results_on_select || (evt.metaKey or evt.ctrlKey))
         this.results_hide()
 
-      this.show_search_field_default() if @is_keyboard_user
+      this.show_search_field_default()
 
       this.trigger_form_field_change selected: @form_field.options[item.options_index].value  if @is_multiple || @form_field.selectedIndex != @current_selectedIndex
       @current_selectedIndex = @form_field.selectedIndex
