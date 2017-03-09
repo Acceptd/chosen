@@ -469,7 +469,7 @@ class Chosen extends AbstractChosen
 
   keydown_arrow: ->
     if @results_showing and @result_highlight
-      next_sib = @result_highlight.nextAll("li").first()
+      next_sib = if @is_keyboard_user then @result_highlight.nextAll("li").first() else @result_highlight.nextAll("li.active-result").first()
       this.result_do_highlight next_sib if next_sib
     else
       this.results_show()
@@ -479,7 +479,7 @@ class Chosen extends AbstractChosen
     if not @results_showing and not @is_multiple
       this.results_show()
     else if @result_highlight
-      prev_sibs = @result_highlight.prevAll("li")
+      prev_sibs = if @is_keyboard_user then @result_highlight.prevAll("li") else @result_highlight.prevAll("li.active-result")
 
       if prev_sibs.length
         this.result_do_highlight prev_sibs.first()
