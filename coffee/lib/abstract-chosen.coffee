@@ -251,12 +251,18 @@ class AbstractChosen
     this.activate_field()
     this.results_show() unless @results_showing or @is_disabled
 
+  compare_strokes: (stroke) ->
+    if @lastStroke? and @lastStroke == 40 or @lastStroke == 38 or @lastStroke == 32
+      if stroke == 40 or stroke == 38 or stroke == 32 then this.set_keyboard_user()
+    @lastStroke = stroke
+
   set_keyboard_user: ->
     @is_keyboard_user = true
     @hide_results_on_select = false if @is_multiple
 
   keydown_checker: (evt) ->
     stroke = evt.which ? evt.keyCode
+    this.compare_strokes(stroke)
     this.search_field_scale()
 
     this.clear_backstroke() if stroke != 8 and @pending_backstroke

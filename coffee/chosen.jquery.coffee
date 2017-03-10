@@ -469,11 +469,14 @@ class Chosen extends AbstractChosen
 
   keydown_arrow: ->
     if @results_showing and @result_highlight
-      next_sib = if @is_keyboard_user then @result_highlight.nextAll("li").first() else @result_highlight.nextAll("li.active-result").first()
-      this.result_do_highlight next_sib if next_sib
+      next_sib = if @is_keyboard_user then @result_highlight.nextAll("li").not(".disabled-result").first() else @result_highlight.nextAll("li.active-result").not(".disabled-result").first()
+
+      if next_sib.length
+        this.result_do_highlight next_sib
+      else
+        this.result_do_highlight @search_results.children().not(".disabled-result").first()
     else
       this.results_show()
-      this.result_do_highlight @search_results.children().first() if this.choices_count() == @search_results.children().length
 
   keyup_arrow: ->
     if not @results_showing and not @is_multiple
@@ -481,8 +484,10 @@ class Chosen extends AbstractChosen
     else if @result_highlight
       prev_sibs = if @is_keyboard_user then @result_highlight.prevAll("li") else @result_highlight.prevAll("li.active-result")
 
-      if prev_sibs.length
+      if prev_sibs.not(".disabled-result").length
         this.result_do_highlight prev_sibs.first()
+      else if @is_keyboard_user
+        this.result_do_highlight @search_results.children().not(".disabled-result").last()
       else
         this.results_hide() if this.choices_count() > 0
         this.result_clear_highlight()
